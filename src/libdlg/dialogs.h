@@ -20,7 +20,7 @@ struct DLG_Item
     WCHAR const *Title;
     int rcid;
     WORD GroupId;
-    BOOL (*ItemProc)(
+    INT_PTR (*ItemProc)(
         HWND window, WORD id, UINT msg, WPARAM wParam, LPARAM lParam);
     };
 
@@ -29,7 +29,7 @@ struct DLG_ItemData
     WORD Id;
     WORD GroupId;
     struct DLG_Control *Control;
-    BOOL (*ItemProc)(
+    INT_PTR (*ItemProc)(
         HWND window, WORD id, UINT msg, WPARAM wParam, LPARAM lParam);
     int SizeKnown;
     SIZE ESZ;
@@ -57,7 +57,7 @@ void *PackDialogU(
     );
 size_t AdjustToDWORD(size_t n);
 void DlgMoveItem(HWND window, int id, int x, int y, int cx, int cy);
-int DlgRunU(
+INT_PTR DlgRunU(
     HWND window,
     WCHAR *strtitle,
     int rctitle,

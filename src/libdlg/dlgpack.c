@@ -1,5 +1,5 @@
 /* ===================================================================
- * Copyright (c) 2005,2006 Vadim Druzhin (cdslow@mail.ru).
+ * Copyright (c) 2005-2012 Vadim Druzhin (cdslow@mail.ru).
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -67,8 +67,8 @@ typedef struct
 #endif
 typedef struct
     {
-    short  pointsize;       /* only if DS_SETFONT flag is set */
-    short  weight;          /* only if DS_SETFONT flag is set */
+    WORD   pointsize;       /* only if DS_SETFONT flag is set */
+    WORD   weight;          /* only if DS_SETFONT flag is set */
     BYTE   bItalic;         /* only if DS_SETFONT flag is set */
     BYTE   charset;
     } DLGTEMPLATEEXFONT;
@@ -109,7 +109,7 @@ void *PackDialogU(
     size_t dclass_size;
     size_t dtitle_size;
     size_t dfont_size;
-    size_t title_id_len;
+    int title_id_len;
     size_t title_str_len;
     size_t title_space_len;
     WCHAR *titlespace=L" - ";
@@ -210,7 +210,7 @@ void *PackDialogU(
         dfont=(WCHAR *)((char *)(dfparam)+sizeof(*dfparam));
 
         dfparam->pointsize=pointsize;
-        dfparam->weight=fnt->lfWeight;
+        dfparam->weight=(WORD)fnt->lfWeight;
         dfparam->bItalic=fnt->lfItalic;
         dfparam->charset=fnt->lfCharSet;
         StringCopyU(dfont, fnt->lfFaceName);
@@ -278,7 +278,7 @@ static size_t DlgPackItemU(char *buf, struct DLG_Item *item)
     if(item->Title!=NULL)
         StringCopyU(dtitle, item->Title);
     else
-        ResLoadStringU(item->rcid, dtitle, dtitle_size/sizeof(WCHAR));
+        ResLoadStringU(item->rcid, dtitle, (int)dtitle_size/sizeof(WCHAR));
     *extra=0;
 
     item_size=sizeof(*di)+dclass_size+dtitle_size+sizeof(*extra);

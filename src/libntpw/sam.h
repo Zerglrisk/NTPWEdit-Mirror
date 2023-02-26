@@ -4,7 +4,7 @@
  *****
  *
  * NTREG - Window registry file reader / writer library
- * Copyright (c) 1997-2007 Petter Nordahl-Hagen.
+ * Copyright (c) 1997-2011 Petter Nordahl-Hagen.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,6 +22,9 @@
 #ifndef _INCLUDE_SAM_H
 #define _INCLUDE_SAM_H 1
 
+#include <sys/types.h>
+#include <stdint.h>
+
 /* This contains some policy settings for the account database */
 
 #define ACCOUNTDB_F_PATH "\\SAM\\Domains\\Account\\F"
@@ -30,7 +33,7 @@
 struct accountdb_F {
   char unknown1[8]; /* 0 */
   char unknown2[8]; /* 8 */
-  unsigned long updatecnt;   /* 10 Number of times policy data updated */
+  uint32_t updatecnt;   /* 10 Number of times policy data updated */
   char unknown3[4]; /* 14 */
   char t_maxpwage[8];  /* 18 Maximum password age, GUI shows only days */
   char t_minpwage[8];  /* 20 Minimum password age, GUI shows only days */
@@ -38,8 +41,8 @@ struct accountdb_F {
   char t_lockdur[8];  /*  30 Account lockout duration, GUI shows minutes */
   char t_lockrel[8];  /*  38 Release account lockout after, GUI show minutes */
   char unknown5[8];   /*  40 */
-  unsigned long rid;  /*  48 RID of user doing last edit? */
-  unsigned long flags; /* 4c Some flags & options, see below */
+  uint32_t rid;  /*  48 RID of user doing last edit? */
+  uint32_t flags; /* 4c Some flags & options, see below */
   unsigned short minpwlen; /* 50 Minimum password lenght */
   unsigned short numhist;  /* 52 How many passwords to keep in history */
   unsigned short locklimit; /*54  How many tries before lockout */
@@ -63,7 +66,7 @@ struct user_F {
   char t_creation[8]; /* Time of account creation */
   char unknown3[8];
   char t_login[8];    /* Time of last login */
-  long rid;
+  int32_t rid;
   char unknown4[4];
   unsigned short ACB_bits;  /* Account type and status flags */
   char unknown5[6];
@@ -183,5 +186,37 @@ struct user_V {
 
 };
 
+/* Groups C data struct
+ * First 0x34 bytes is pointer & len table, rest is data which
+ * the table points to
+ * String data is unicode, not zero terminated (must use len)
+ */
+
+struct group_C {
+
+  int groupid;         /* 0x00 - Seems to be the group ID */
+  int unknown1_1;      /* 0x04 - always zero? */
+  int unknown1_2;      /* 0x08 - points to groupname? */
+  int unknown1_3;      /* 0x0c - always 0x02 0x00 0x01 0x00 ? */
+
+  int grpname_ofs;    /* 0x10 */
+  int grpname_len;    /* 0x14 */
+
+  int unknown2_1;      /* 0x18 - always zero? */
+
+  int fullname_ofs;    /* 0x1c */
+  int fullname_len;    /* 0x20 */
+
+  int unknown3_1;      /* 0x24 - always zero? */
+  int unknown3_2;      /* 0x28 - always zero? */
+  int unknown3_3;      /* 0x2c - always zero? */
+
+  int grp_members;     /* 0x30 - number of group members */
+
+  /* 0x34 - data starts here. pointers above are offset from this */
+
+  char data[];
+
+};
 
 #endif

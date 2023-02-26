@@ -1,34 +1,31 @@
 /* ===================================================================
- * Copyright (c) 2005-2007 Vadim Druzhin (cdslow@mail.ru).
- * All rights reserved.
+ * Copyright (c) 2005-2012 Vadim Druzhin (cdslow@mail.ru).
  * 
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; version 2 of the License.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  * ===================================================================
  */
 
 /*
  * This file uses parts of code from chntpw.c, which is
- * Copyright (c) 1997-2007 Petter Nordahl-Hagen.
+ * Copyright (c) 1997-2011 Petter Nordahl-Hagen.
  */ 
 
+#define _CRT_SECURE_NO_WARNINGS
 #include <stdlib.h>
 #include <stdio.h>
-#include <mem.h>
 #include <ctype.h>
+#include <string.h>
 #include <openssl/des.h>
 #include <openssl/md4.h>
 #include "ntreg.h"
@@ -66,13 +63,13 @@ int open_hives(char *fname[H_COUNT])
             closeHive(hive[i]);
         hive[i]=openHive(fname[i], HMODE_RW/*|HMODE_NOALLOC|HMODE_VERBOSE*/);
         if(NULL==hive[i])
-            WriteLog("open_hives: Unable to open/read a hive '%s'\n",
+            logprintf("open_hives: Unable to open/read a hive '%s'\n",
                 fname[i]);
         else
             {
             ++count;
             if(hive[i]->state & HMODE_RO)
-                WriteLog("open_hives: Hive '%s' opened readonly!\n",
+                logprintf("open_hives: Hive '%s' opened readonly!\n",
                     fname[i]);
             }
         }
@@ -94,10 +91,10 @@ static void check_get_samdata(void)
         return;
 
     /* Get users F value */
-    v=get_val2buf(hive[H_SAM], NULL, 0, ACCOUNTDB_F_PATH, REG_BINARY);
+    v=get_val2buf(hive[H_SAM], NULL, 0, ACCOUNTDB_F_PATH, REG_BINARY, TPF_VK);
     if(!v)
         {
-        WriteLog("check_get_samdata: Login counts data not found in SAM!\n");
+        logprintf("check_get_samdata: Login counts data not found in SAM!\n");
         return;
         }
 
@@ -160,12 +157,12 @@ int write_hives(void)
             continue;
 	if(hive[i]->state & HMODE_DIRTY)
             {
-            WriteLog("Writing hive <%s> ", hive[i]->filename);
+            logprintf("Writing hive <%s> ", hive[i]->filename);
 	    if(0==writeHive(hive[i]))
-	        WriteLog("OK\n");
+	        logprintf("OK\n");
             else
                 {
-	        WriteLog("FAILED!\n");
+	        logprintf("FAILED!\n");
                 ret=0;
                 }
 	    }
@@ -194,7 +191,7 @@ struct user_info *next_user(struct search_user *su)
 
     if(!su->nkofs)
         {
-        WriteLog("next_user: Cannot find usernames in registry! (is this a SAM-hive?)\n");
+        logprintf("next_user: Cannot find usernames in registry! (is this a SAM-hive?)\n");
         return NULL;
         }
 
@@ -212,7 +209,7 @@ struct user_info *next_user(struct search_user *su)
     ui=malloc(sizeof(*ui)+name_size);
     if(NULL==ui)
         {
-        WriteLog("next_user: Memory full!\n");
+        logprintf("next_user: Memory full!\n");
         return NULL;
         }
     ui->unicode_name=(char *)(ui+1);
@@ -227,7 +224,7 @@ struct user_info *next_user(struct search_user *su)
     ui->unicode_name[name_size-1]=0;
 
     /* Extract the value out of the username-key, value is RID  */
-    ui->rid = get_dword(hive[H_SAM], ex.nkoffs+4, "@");
+    ui->rid = get_dword(hive[H_SAM], ex.nkoffs+4, "@", TPF_VK_EXACT|TPF_VK_SHORT);
 
     return ui;
     }
@@ -247,14 +244,14 @@ int is_account_locked(int rid)
     f = (struct user_F *)&v->data;
     acb = f->ACB_bits;
 
-    WriteLog("Failed login count: %u, while max tries is: %u\n",
+    logprintf("Failed login count: %u, while max tries is: %u\n",
         f->failedcnt, max_sam_lock);
-    WriteLog("Total  login count: %u\n", f->logins);
+    logprintf("Total  login count: %u\n", f->logins);
     
     if(acb&(ACB_DISABLED|ACB_AUTOLOCK) ||
         (f->failedcnt > 0 && f->failedcnt >= max_sam_lock))
         {
-	WriteLog("Account is %s\n",
+	logprintf("Account is %s\n",
             (acb & ACB_DISABLED) ? "disabled" : "probably locked out!");
         ret=1;
         }
@@ -293,8 +290,8 @@ int unlock_account(int rid)
     f->ACB_bits = acb;
     f->failedcnt = 0;
     sprintf(s, "%s%08X%s", user_path_1, rid&0xFFFFFFFFu, user_path_F);
-    put_buf2val(hive[H_SAM], v, 0, s, REG_BINARY);
-    WriteLog("Unlocked!\n");
+    put_buf2val(hive[H_SAM], v, 0, s, REG_BINARY, TPF_VK_EXACT);
+    logprintf("Unlocked!\n");
 
     free(v);
 
@@ -308,16 +305,16 @@ static struct keyval *get_user_f(int rid)
 
     /* Get users F value */
     sprintf(s, "%s%08X%s", user_path_1, rid&0xFFFFFFFFu, user_path_F);
-    v = get_val2buf(hive[H_SAM], NULL, 0, s, REG_BINARY);
+    v = get_val2buf(hive[H_SAM], NULL, 0, s, REG_BINARY, TPF_VK_EXACT);
     if(!v)
         {
-        WriteLog("get_user_f: Cannot find value <%s>!\n", s);
+        logprintf("get_user_f: Cannot find value <%s>!\n", s);
         return(NULL);
         }
 
     if(v->len!=0x50)
         {
-        WriteLog("get_user_f: F value is 0x%x bytes, not 0x50,"
+        logprintf("get_user_f: F value is 0x%x bytes, not 0x50,"
             " unable to check account flags!\n", v->len);
         free(v);
         return(NULL);
@@ -333,16 +330,16 @@ int change_password(int rid, char *password)
     int ret;
 
     sprintf(s, "%s%08X%s", user_path_1, rid&0xFFFFFFFFu, user_path_V);
-    v = get_val2buf(hive[H_SAM], NULL, 0, s, REG_BINARY);
+    v = get_val2buf(hive[H_SAM], NULL, 0, s, REG_BINARY, TPF_VK_EXACT);
     if(!v)
         {
-        WriteLog("change_password: Cannot find value <%s>\n", s);
+        logprintf("change_password: Cannot find value <%s>\n", s);
         return 0;
         }
 
     if(v->len<0xcc)
         {
-        WriteLog("change_password: Value <%s> is too short (only %ld bytes)"
+        logprintf("change_password: Value <%s> is too short (only %ld bytes)"
             " to be a SAM user V-struct!\n", s, v->len);
         free(v);
         return 0;
@@ -351,9 +348,9 @@ int change_password(int rid, char *password)
     ret=compute_pw((char *)&v->data , rid, v->len, password);
     if(ret)
         {
-        if(!(put_buf2val(hive[H_SAM], v, 0, s, REG_BINARY)))
+        if(!(put_buf2val(hive[H_SAM], v, 0, s, REG_BINARY, TPF_VK_EXACT)))
             {
-	     WriteLog("change_password: Failed to write updated <%s> to registry!"
+	     logprintf("change_password: Failed to write updated <%s> to registry!"
                 " Password change not completed!\n", s);
             ret=0;
             }
@@ -425,7 +422,7 @@ static int compute_pw(char *buf, int rid, int vlen, char *password)
         comment_offset < 0 || comment_offset >= vlen ||
         lmpw_offs < 0 || lmpw_offs >= vlen)
         {
-        WriteLog("compute_pw: Not a legal struct?"
+        logprintf("compute_pw: Not a legal struct?"
             " (negative struct lengths)\n");
         return(0);
         }
@@ -443,33 +440,33 @@ static int compute_pw(char *buf, int rid, int vlen, char *password)
     cheap_uni2ascii(vp + comment_offset,comment,comment_len);
     cheap_uni2ascii(vp + homedir_offset,homedir,homedir_len);
    
-    WriteLog("RID     : %04d [%04x]\n",rid,rid);
-    WriteLog("Username: %s\n",username);
-    WriteLog("fullname: %s\n",fullname);
-    WriteLog("comment : %s\n",comment);
-    WriteLog("homedir : %s\n\n",homedir);
+    logprintf("RID     : %04d [%04x]\n",rid,rid);
+    logprintf("Username: %s\n",username);
+    logprintf("fullname: %s\n",fullname);
+    logprintf("comment : %s\n",comment);
+    logprintf("homedir : %s\n\n",homedir);
    
     if(lmpw_len<16)
-        WriteLog("** LANMAN password not set. User MAY have a blank"
+        logprintf("** LANMAN password not set. User MAY have a blank"
             " password.\n** Usually safe to continue\n");
 
     if(ntpw_len<16)
         {
-        WriteLog("** No NT MD4 hash found. This user probably has a"
+        logprintf("** No NT MD4 hash found. This user probably has a"
             " BLANK password!\n");
         if(lmpw_len<16)
             {
-	    WriteLog("** No LANMAN hash found either. Sorry, cannot change."
+	    logprintf("** No LANMAN hash found either. Sorry, cannot change."
                 " Try login with no password!\n");
 	    all_pw_blank = 1;
             }
         else
             {
-	    WriteLog("** LANMAN password IS however set."
+	    logprintf("** LANMAN password IS however set."
                 " Will now install new password as NT pass instead.\n");
-	    WriteLog("** NOTE: Continue at own risk!\n");
+	    logprintf("** NOTE: Continue at own risk!\n");
 	    ntpw_offs = lmpw_offs;
-	    *(unsigned int *)(vp+0xa8) = ntpw_offs - 0xcc;
+	    *(vp+0xa8) = ntpw_offs - 0xcc;
 	    ntpw_len = 16;
 	    lmpw_len = 0;
             }
@@ -495,7 +492,7 @@ static int compute_pw(char *buf, int rid, int vlen, char *password)
       
     strncpy(newp, password, 16);
     newp[16]=0;
-    pl=strlen(newp);
+    pl=(int)strlen(newp);
    
     if(0!=*newp)
         {
@@ -547,11 +544,11 @@ static int compute_pw(char *buf, int rid, int vlen, char *password)
         }
     else
         {
-        WriteLog("compute_pw: Unable to set since it is blank.\n");
+        logprintf("compute_pw: Unable to set since it is blank.\n");
         return 0;
         }
 
-    WriteLog("Changed!\n");
+    logprintf("Changed!\n");
 
     return(1);
     }

@@ -1,5 +1,5 @@
 /* ===================================================================
- * Copyright (c) 2005,2006 Vadim Druzhin (cdslow@mail.ru).
+ * Copyright (c) 2005-2012 Vadim Druzhin (cdslow@mail.ru).
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -35,53 +35,51 @@
 
 #define STRICT
 #include <windows.h>
-#include "unicode.h"
 #include "dialogs.h"
-#include "ctl_edit.h"
+#include "ctl_image.h"
 
-#define CTL_EXTRA_LEFT   3
-#define CTL_EXTRA_RIGHT  3
-#define CTL_EXTRA_TOP    3
-#define CTL_EXTRA_BOTTOM 3
-static void Estimate(HWND window, int id, SIZE *sz, SIZE *max)
+static void IconMinSize(HWND window, int id, SIZE *sz, SIZE *max)
     {
-    int len;
+    RECT r;
 
-    len=GetWindowTextLengthU(GetDlgItem(window, id));
-    if(len>0)
-        {
-        GetDlgItemTextSize(window, id, sz);
-        sz->cx+=sz->cx/len;
-        }
-    else
-        GetWindowStrSize(GetDlgItem(window, id), L"  ", sz);
-
-    sz->cy+=CTL_EXTRA_TOP+CTL_EXTRA_BOTTOM;
-    sz->cx+=CTL_EXTRA_LEFT+CTL_EXTRA_RIGHT;
-    if(sz->cy>sz->cx) sz->cx=sz->cy;
-    max->cx=ITEM_MSZ_FILL;
+    GetWindowRect(GetDlgItem(window, id), &r);
+    sz->cx=r.right-r.left;
+    sz->cy=r.bottom-r.top;
+    max->cx=ITEM_MSZ_FIXED;
     max->cy=ITEM_MSZ_FIXED;
     }
 
-struct DLG_Control CtlEdit=
+static void IconSize16(HWND window, int id, SIZE *sz, SIZE *max)
     {
-    L"EDIT",
-    WS_TABSTOP|ES_AUTOHSCROLL|WS_BORDER,
+    (void)window; /* Unused */
+    (void)id;     /* Unused */
+    sz->cx=16;
+    sz->cy=16;
+    max->cx=ITEM_MSZ_FIXED;
+    max->cy=ITEM_MSZ_FIXED;
+    }
+
+struct DLG_Control CtlIcon=
+    {
+    L"STATIC",
+    SS_ICON,
     0,
     TRUE,
     NULL,
-    Estimate,
-    DlgMoveItem
+    IconMinSize,
+    DlgMoveItem,
+    NULL
     };
 
-struct DLG_Control CtlEditRight=
+struct DLG_Control CtlIcon16=
     {
-    L"EDIT",
-    WS_TABSTOP|ES_AUTOHSCROLL|ES_RIGHT|WS_BORDER,
+    L"STATIC",
+    SS_ICON,
     0,
     TRUE,
     NULL,
-    Estimate,
-    DlgMoveItem
+    IconSize16,
+    DlgMoveItem,
+    NULL
     };
 

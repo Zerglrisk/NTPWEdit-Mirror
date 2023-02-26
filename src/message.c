@@ -1,22 +1,18 @@
 /* ===================================================================
- * Copyright (c) 2005-2007 Vadim Druzhin (cdslow@mail.ru).
- * All rights reserved.
+ * Copyright (c) 2005-2012 Vadim Druzhin (cdslow@mail.ru).
  * 
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; version 2 of the License.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  * ===================================================================
  */
 
@@ -31,7 +27,7 @@
 #include "version.h"
 #include "message.h"
 
-static BOOL Button_OK(
+static INT_PTR Button_OK(
     HWND window, WORD id, UINT msg, WPARAM wParam, LPARAM lParam);
 
 enum
@@ -111,12 +107,12 @@ static struct DLG_Item *AssembleItems(int *count, ...)
     return assembled;
     }
 
-int AppMessageBox(HWND window, WCHAR *msg, UINT flags)
+INT_PTR AppMessageBox(HWND window, WCHAR *msg, UINT flags)
     {
     struct DLG_Item label;
     struct DLG_Item *items;
     int count;
-    int ret;
+    INT_PTR ret;
 
     label=Item_Label;
     label.Title=msg;
@@ -157,9 +153,12 @@ int AppMessageBox(HWND window, WCHAR *msg, UINT flags)
     return ret;
     }
 
-static BOOL Button_OK(
+static INT_PTR Button_OK(
     HWND window, WORD id, UINT msg, WPARAM wParam, LPARAM lParam)
     {
+    (void)wParam; /* Unused */
+    (void)lParam; /* Unused */
+
     if(WM_COMMAND==msg)
         {
         EndDialog(window, id);

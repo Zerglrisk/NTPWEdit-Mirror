@@ -1,5 +1,5 @@
 /* ===================================================================
- * Copyright (c) 2005,2006 Vadim Druzhin (cdslow@mail.ru).
+ * Copyright (c) 2005-2012 Vadim Druzhin (cdslow@mail.ru).
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -121,6 +121,8 @@ static void GetGroupTextSize(HWND window, int id, SIZE *sz)
 
 static void SpacerEstimateSize(HWND window, int id, SIZE *sz, SIZE *max)
     {
+    (void)window; /* Unused */
+    (void)id;     /* Unused */
     sz->cy=sz->cx=(GRPBOX_EXTRA_LEFT+GRPBOX_EXTRA_RIGHT)/2;
     /*sz->cy=(GRPBOX_EXTRA_TOP+GRPBOX_EXTRA_BOTTOM)/2;*/
     max->cx=ITEM_MSZ_FIXED;
@@ -129,6 +131,12 @@ static void SpacerEstimateSize(HWND window, int id, SIZE *sz, SIZE *max)
 
 static void SpacerMove(HWND window, int id, int x, int y, int w, int h)
     {
+    (void)window; /* Unused */
+    (void)id;     /* Unused */
+    (void)x;      /* Unused */
+    (void)y;      /* Unused */
+    (void)w;      /* Unused */
+    (void)h;      /* Unused */
     }
 
 struct DLG_Control CtlGroupBoxV=
@@ -139,7 +147,8 @@ struct DLG_Control CtlGroupBoxV=
     FALSE,
     NULL,
     VGroupEstimateSize,
-    VGroupMove
+    VGroupMove,
+    NULL
     };
 
 struct DLG_Control CtlGroupBoxH=
@@ -150,7 +159,8 @@ struct DLG_Control CtlGroupBoxH=
     FALSE,
     NULL,
     HGroupEstimateSize,
-    HGroupMove
+    HGroupMove,
+    NULL
     };
 
 struct DLG_Control CtlGroupBoxSpacer=
@@ -161,6 +171,7 @@ struct DLG_Control CtlGroupBoxSpacer=
     FALSE,
     NULL,
     SpacerEstimateSize,
-    SpacerMove
+    SpacerMove,
+    NULL
     };
 

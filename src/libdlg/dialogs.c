@@ -1,5 +1,5 @@
 /* ===================================================================
- * Copyright (c) 2005,2006 Vadim Druzhin (cdslow@mail.ru).
+ * Copyright (c) 2005-2012 Vadim Druzhin (cdslow@mail.ru).
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -45,7 +45,7 @@ static struct DLG_Data *SaveDialogData(
     int itemcount,
     void *param
     );
-static BOOL CALLBACK ModalProc(
+static INT_PTR CALLBACK ModalProc(
     HWND window,
     UINT msg,
     WPARAM wParam,
@@ -56,7 +56,7 @@ static void DlgResizeWindow(HWND window, int cx, int cy);
 static void DlgPlaceWindow(HWND window);
 static void GetMonitorRect(POINT p, RECT *r);
 
-int DlgRunU(
+INT_PTR DlgRunU(
     HWND window,
     WCHAR *strtitle,
     int rctitle,
@@ -71,7 +71,7 @@ int DlgRunU(
     struct DLG_Data *data;
     LOGFONTW *fnt;
     NONCLIENTMETRICSW ncmw;
-    int ret;
+    INT_PTR ret;
 
     if(GetNonClientMetricsU(&ncmw))
         fnt=&ncmw.lfMessageFont;
@@ -192,7 +192,7 @@ static struct DLG_Data *SaveDialogData(
     return data;
     }
 
-static BOOL CALLBACK ModalProc(
+static INT_PTR CALLBACK ModalProc(
     HWND window,
     UINT msg,
     WPARAM wParam,
@@ -207,7 +207,7 @@ static BOOL CALLBACK ModalProc(
         {
         SIZE sz, max, bsz;
 
-        SetWindowLong(window, GWL_USERDATA, lParam);
+        SetWindowLongPtr(window, GWLP_USERDATA, lParam);
         data=(struct DLG_Data *)lParam;
         for(i=0; i<data->count; ++i)
             {
@@ -233,7 +233,7 @@ static BOOL CALLBACK ModalProc(
         RECT r;
         HRGN rgndlg, rgn;
 
-        data=(struct DLG_Data *)GetWindowLong(window, GWL_USERDATA);
+        data=(struct DLG_Data *)GetWindowLongPtr(window, GWLP_USERDATA);
 
         GetClientRect(window, &r);
         CtlGroupV.Move(window, 0, 0, 0, r.right, r.bottom);
@@ -246,7 +246,7 @@ static BOOL CALLBACK ModalProc(
             if(data->Item[i].Control->Solid)
                 {
                 GetWindowRect(GetDlgItem(window, data->Item[i].Id), &r);
-                MapWindowPoints(NULL, window, (POINT *)&r, 2);
+                MapWindowPoints(NULL, window, (POINT *)(void *)&r, 2);
                 rgn=CreateRectRgnIndirect(&r);
                 CombineRgn(rgndlg, rgndlg, rgn, RGN_DIFF);
                 DeleteObject(rgn);
@@ -260,7 +260,7 @@ static BOOL CALLBACK ModalProc(
         {
         MINMAXINFO *mmi=(LPMINMAXINFO)lParam;
 
-        data=(struct DLG_Data *)GetWindowLong(window, GWL_USERDATA);
+        data=(struct DLG_Data *)GetWindowLongPtr(window, GWLP_USERDATA);
         if(data->MinTrackSize.x!=0 && data->MinTrackSize.y!=0)
             {
             mmi->ptMinTrackSize=data->MinTrackSize;
@@ -274,11 +274,11 @@ static BOOL CALLBACK ModalProc(
         }
     else if(WM_DESTROY==msg)
         {
-        data=(struct DLG_Data *)GetWindowLong(window, GWL_USERDATA);
+        data=(struct DLG_Data *)GetWindowLongPtr(window, GWLP_USERDATA);
         if(NULL!=data)
             {
             free(data);
-            SetWindowLong(window, GWL_USERDATA, 0);
+            SetWindowLongPtr(window, GWLP_USERDATA, 0);
             }
         return TRUE;
         }
@@ -287,7 +287,7 @@ static BOOL CALLBACK ModalProc(
         id=LOWORD(wParam);
         if(WM_CTLCOLORSTATIC==msg)
             id=GetDlgCtrlID((HWND)lParam);
-        data=(struct DLG_Data *)GetWindowLong(window, GWL_USERDATA);
+        data=(struct DLG_Data *)GetWindowLongPtr(window, GWLP_USERDATA);
         if(NULL==data)
             return FALSE;
         for(i=0; i<data->count; ++i)
@@ -402,7 +402,7 @@ static void GroupEstimateSize(HWND window, int id, SIZE *sz, SIZE *max, BOOL V)
     int i;
     int grp_style=0;
 
-    data=(struct DLG_Data *)GetWindowLong(window, GWL_USERDATA);
+    data=(struct DLG_Data *)GetWindowLongPtr(window, GWLP_USERDATA);
 
     sz->cx=0;
     sz->cy=0;
@@ -557,7 +557,7 @@ static void GroupMove(HWND window, int id, int x, int y, int w, int h, BOOL V)
     int item_w, item_h;
     int delta_x, delta_y;
 
-    data=(struct DLG_Data *)GetWindowLong(window, GWL_USERDATA);
+    data=(struct DLG_Data *)GetWindowLongPtr(window, GWLP_USERDATA);
     GroupCountItems(data, id, &gci_cx, &gci_cy);
 
     if(V)
@@ -576,6 +576,7 @@ static void GroupMove(HWND window, int id, int x, int y, int w, int h, BOOL V)
         else
             spacing_w=(w-gci_cx.sum)/gci_cx.tcount;
         spacing_h=h-gci_cy.max;
+        over_h=0;
         }
 
     if(!V && ITEM_MSZ_FIXED==gci_cx.type)
@@ -664,7 +665,7 @@ void GetWindowStrSize(HWND window, WCHAR *str, SIZE *sz)
         str_end=str;
         while(*str_end!=0 && *str_end!=L'\n')
             ++str_end;
-        len=str_end-str;
+        len=(int)(str_end-str);
         if(0==len)
             len=1;
         lsz.cx=0;
@@ -717,7 +718,8 @@ struct DLG_Control CtlGroupV=
     FALSE,
     NULL,
     GroupEstimateSizeV,
-    GroupMoveV
+    GroupMoveV,
+    NULL
     };
 
 struct DLG_Control CtlGroupH=
@@ -728,6 +730,7 @@ struct DLG_Control CtlGroupH=
     FALSE,
     NULL,
     GroupEstimateSizeH,
-    GroupMoveH
+    GroupMoveH,
+    NULL
     };
 

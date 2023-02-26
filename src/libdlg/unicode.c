@@ -1,5 +1,5 @@
 /* ===================================================================
- * Copyright (c) 2005,2006 Vadim Druzhin (cdslow@mail.ru).
+ * Copyright (c) 2005-2012 Vadim Druzhin (cdslow@mail.ru).
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -58,20 +58,19 @@ static BOOL WINAPI Shell_NotifyIconWtoA(DWORD msg, NOTIFYICONDATAW *nidw);
 static BOOL GetVolumeLabelW(WCHAR *root, WCHAR *label, int size);
 static BOOL GetVolumeLabelA(WCHAR *root, WCHAR *label, int size);
 
-BOOL (*GetNonClientMetricsU)(NONCLIENTMETRICSW *ncmw)=GetNonClientMetricsA;
-int WINAPI (*DialogBoxIndirectParamU)
-    (HINSTANCE,LPCDLGTEMPLATE,HWND,DLGPROC,LPARAM)=DialogBoxIndirectParamA;
-HWND WINAPI (*CreateDialogIndirectParamU)
-    (HINSTANCE,LPCDLGTEMPLATE,HWND,DLGPROC,LPARAM)=CreateDialogIndirectParamA;
-BOOL WINAPI (*InsertMenuItemU)(HMENU,UINT,BOOL,LPCMENUITEMINFOW)=
+GetNonClientMetricsU_t *GetNonClientMetricsU=GetNonClientMetricsA;
+DialogBoxIndirectParamU_t *DialogBoxIndirectParamU=DialogBoxIndirectParamA;
+CreateDialogIndirectParamU_t *CreateDialogIndirectParamU=
+    CreateDialogIndirectParamA;
+InsertMenuItemU_t *InsertMenuItemU=
     InsertMenuItemWtoA;
-void (*DlgItemReplaceSelRcU)(HWND dlg, int item, UINT rcid)=
+DlgItemReplaceSelRcU_t *DlgItemReplaceSelRcU=
     DlgItemReplaceSelRcA;
-BOOL WINAPI (*SetDlgItemTextU)(HWND,int,LPCWSTR)=SetDlgItemTextWtoA;
-UINT WINAPI (*GetDlgItemTextU)(HWND,int,LPWSTR,int)=GetDlgItemTextWtoA;
-int WINAPI (*GetWindowTextLengthU)(HWND)=GetWindowTextLengthA;
-BOOL WINAPI (*Shell_NotifyIconU)(DWORD,PNOTIFYICONDATAW)=Shell_NotifyIconWtoA;
-BOOL (*GetVolumeLabelU)(WCHAR *root, WCHAR *label, int size)=GetVolumeLabelA;
+SetDlgItemTextU_t *SetDlgItemTextU=SetDlgItemTextWtoA;
+GetDlgItemTextU_t *GetDlgItemTextU=GetDlgItemTextWtoA;
+GetWindowTextLengthU_t *GetWindowTextLengthU=GetWindowTextLengthA;
+Shell_NotifyIconU_t *Shell_NotifyIconU=Shell_NotifyIconWtoA;
+GetVolumeLabelU_t *GetVolumeLabelU=GetVolumeLabelA;
 
 static BOOL OSRealUnicode=FALSE;
 
@@ -103,7 +102,8 @@ void UnicodeInit(void)
         if(NULL==shell32)
             shell32=LoadLibrary("shell32.dll");
         if(NULL!=shell32)
-            Shell_NotifyIconU=GetProcAddress(shell32, "Shell_NotifyIconW");
+            Shell_NotifyIconU=(Shell_NotifyIconU_t *)GetProcAddress(
+                shell32, "Shell_NotifyIconW");
         if(NULL==Shell_NotifyIconU)
             Shell_NotifyIconU=Shell_NotifyIconWtoA;
         }
@@ -201,7 +201,7 @@ WCHAR *MapStringU(HINSTANCE hinst, UINT id, int lng, int *len)
     HRSRC rcr;
     HGLOBAL rcg;
     WCHAR *w;
-    int i;
+    unsigned i;
 
     rcr=FindResourceEx(hinst, RT_STRING, MAKEINTRESOURCE((id>>4)+1), lng);
     if(rcr==NULL)

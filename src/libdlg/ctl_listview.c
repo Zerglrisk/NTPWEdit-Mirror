@@ -1,5 +1,5 @@
 /* ===================================================================
- * Copyright (c) 2005,2006 Vadim Druzhin (cdslow@mail.ru).
+ * Copyright (c) 2005-2012 Vadim Druzhin (cdslow@mail.ru).
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -34,8 +34,10 @@
  */
 
 #define STRICT
-#include <windows.h>
+#ifndef __MINGW64__
 #define _WIN32_IE 0x0300
+#endif /* __MINGW64__ */
+#include <windows.h>
 #include <commctrl.h>
 #include "unicode.h"
 #include "dialogs.h"
@@ -140,7 +142,7 @@ static void InitColumns(HWND window, int id)
             end=1;
         else
             *e=0;
-        GetTextExtentPoint32W(dc, s, e-s, &sz);
+        GetTextExtentPoint32W(dc, s, (int)(e-s), &sz);
         col.mask=LVCF_TEXT|LVCF_WIDTH;
         col.pszText=s;
         col.cx=sz.cx+EXTRA_COLUMN;
@@ -191,6 +193,7 @@ struct DLG_Control CtlListView=
     TRUE,
     Init,
     Estimate,
-    DlgMoveItem
+    DlgMoveItem,
+    NULL
     };
 

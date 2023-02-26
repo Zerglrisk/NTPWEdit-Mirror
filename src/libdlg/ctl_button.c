@@ -1,5 +1,5 @@
 /* ===================================================================
- * Copyright (c) 2005,2006 Vadim Druzhin (cdslow@mail.ru).
+ * Copyright (c) 2005-2012 Vadim Druzhin (cdslow@mail.ru).
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -35,32 +35,87 @@
 
 #define STRICT
 #include <windows.h>
-#include <commctrl.h>
 #include "dialogs.h"
-#include "ctl_hotkey.h"
+#include "ctl_button.h"
 
-#define CTL_EXTRA_LEFT   3
-#define CTL_EXTRA_RIGHT  3
-#define CTL_EXTRA_TOP    3
-#define CTL_EXTRA_BOTTOM 3
+#define BUTTON_EXTRA_LEFT   5
+#define BUTTON_EXTRA_RIGHT  5
+#define BUTTON_EXTRA_TOP    5
+#define BUTTON_EXTRA_BOTTOM 5
+/* 8: 79x13 (21x13) */
+/* 24: 242x58 (62x39) */
 static void Estimate(HWND window, int id, SIZE *sz, SIZE *max)
     {
-    GetWindowStrSize(GetDlgItem(window, id),
-        L"Ctrl + Shift + Alt + Page Down", sz);
-    sz->cy+=CTL_EXTRA_TOP+CTL_EXTRA_BOTTOM;
-    sz->cx+=CTL_EXTRA_LEFT+CTL_EXTRA_RIGHT;
-    max->cx=ITEM_MSZ_FILL;
+    int w, h;
+
+    GetDlgItemTextSize(window, id, sz);
+
+    h=sz->cy*8/5;
+    sz->cy+=BUTTON_EXTRA_TOP+BUTTON_EXTRA_BOTTOM;
+    if(h>sz->cy) sz->cy=h;
+
+    w=sz->cy*8/2;
+    sz->cx+=BUTTON_EXTRA_LEFT+BUTTON_EXTRA_RIGHT;
+    if(w>sz->cx) sz->cx=w;
+    max->cx=ITEM_MSZ_FIXED;
     max->cy=ITEM_MSZ_FIXED;
     }
 
-struct DLG_Control CtlHotkey=
+static void EstimateSmall(HWND window, int id, SIZE *sz, SIZE *max)
     {
-    HOTKEY_CLASSW,
-    WS_TABSTOP|WS_BORDER,
+    int w, h;
+
+    GetDlgItemTextSize(window, id, sz);
+
+    h=sz->cy*8/5;
+    sz->cy+=BUTTON_EXTRA_TOP+BUTTON_EXTRA_BOTTOM;
+    if(h>sz->cy) sz->cy=h;
+
+    w=h;
+    sz->cx+=BUTTON_EXTRA_LEFT+BUTTON_EXTRA_RIGHT;
+    if(w>sz->cx) sz->cx=w;
+    max->cx=ITEM_MSZ_FIXED;
+    max->cy=ITEM_MSZ_FIXED;
+    }
+
+static void Init(HWND window, int id)
+    {
+    SetFocus(GetDlgItem(window, id));
+    }
+
+struct DLG_Control CtlButton=
+    {
+    L"BUTTON",
+    WS_TABSTOP,
     0,
     TRUE,
     NULL,
     Estimate,
-    DlgMoveItem
+    DlgMoveItem,
+    NULL
+    };
+
+struct DLG_Control CtlDefButton=
+    {
+    L"BUTTON",
+    WS_TABSTOP|BS_DEFPUSHBUTTON,
+    0,
+    TRUE,
+    Init,
+    Estimate,
+    DlgMoveItem,
+    NULL
+    };
+
+struct DLG_Control CtlSmallButton=
+    {
+    L"BUTTON",
+    WS_TABSTOP,
+    0,
+    TRUE,
+    NULL,
+    EstimateSmall,
+    DlgMoveItem,
+    NULL
     };
 
