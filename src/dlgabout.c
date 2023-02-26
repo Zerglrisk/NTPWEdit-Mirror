@@ -1,23 +1,6 @@
 /* ===================================================================
- * Copyright (c) 2005,2006 Vadim Druzhin (cdslow@mail.ru).
+ * Copyright (c) 2005-2007 Vadim Druzhin (cdslow@mail.ru).
  * All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 
- *    1. Redistributions of source code must retain the above
- * copyright notice, this list of conditions and the following
- * disclaimer.
- * 
- *    2. Redistributions in binary form must reproduce the above
- * copyright notice, this list of conditions and the following
- * disclaimer in the documentation and/or other materials provided
- * with the distribution.
- * 
- *    3. The name of the author may not be used to endorse or promote
- * products derived from this software without specific prior written
- * permission.
  * 
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -30,6 +13,10 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; version 2 of the License.
  * ===================================================================
  */
 
@@ -79,16 +66,17 @@ static struct DLG_Item Items[]=
     {&CtlGroupBoxSpacer, ID_ICON_SPACER, NULL, 0, ID_GRP_ABOUT, NULL},
     {&CtlGroupV, ID_GRP_VERSION, NULL, 0, ID_GRP_ABOUT, NULL},
     {&CtlLabel, ID_LABEL_VERSION, NULL, 0, ID_GRP_VERSION, Version_Proc},
-    {&CtlLabel, ID_LABEL_LICENSE, L"FREEWARE", 0, ID_GRP_VERSION, NULL},
+    {&CtlLabel, ID_LABEL_LICENSE, L"GPL", 0, ID_GRP_VERSION, NULL},
     {&CtlLabel, ID_V_SPACER1, L" ", 0, ID_GRP_VERSION, NULL},
-    {&CtlLabel, ID_LABEL_COPYRIGHT, L"\xA9 2005,2006 Vadim Druzhin", 0, ID_GRP_VERSION, NULL},
+    {&CtlLabel, ID_LABEL_COPYRIGHT, L"\xA9 2005-2007 Vadim Druzhin", 0, ID_GRP_VERSION, NULL},
     {&CtlLabel, ID_V_SPACER2, L" ", 0, ID_GRP_VERSION, NULL},
-    {&CtlLabel, ID_LABEL_MAIL, L"E-Mail: cdslow@mail.ru", 0, ID_GRP_VERSION, NULL},
+    {&CtlLabel, ID_LABEL_MAIL, L"mailto:cdslow@mail.ru", 0, ID_GRP_VERSION, URL_Proc},
     {&CtlLabel, ID_LABEL_URL, L"http://cdslow.org.ru/ntpwedit/", 0, ID_GRP_VERSION, URL_Proc},
     {&CtlGroupBoxH, ID_GRP_CREDITS, NULL, 0, 0, NULL},
     {&CtlLabel, ID_LABEL_CREDITS, L""
-        "\nIncluded parts of chntpw source and ntreg source (registry edit library)\n"
-        "is Copyright (c) 1997-2004 Petter Nordahl-Hagen, pnordahl@eunet.no\n"
+        "\nIncluded parts of chntpw version 0.99.4 070409 (decade)\n"
+        "and ntreg (registry edit library) is\n"
+        "Copyright (c) 1997-2007 Petter Nordahl-Hagen, pnordahl@eunet.no\n"
         "\nThis product includes software developed by the OpenSSL Project\n"
         "for use in the OpenSSL Toolkit. (http://www.openssl.org/)\n"
         "\nThis product includes cryptographic software written by\n"
@@ -97,9 +85,6 @@ static struct DLG_Item Items[]=
     {&CtlGroupBoxH, ID_GRP_OK, NULL, 0, 0, NULL},
     {&CtlDefButton, IDOK, L"OK", 0, ID_GRP_OK, NULL},
     };
-
-
-
 
 static BOOL URL_Proc(
     HWND window, WORD id, UINT msg, WPARAM wParam, LPARAM lParam)

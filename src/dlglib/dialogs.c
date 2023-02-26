@@ -1,5 +1,5 @@
 /* ===================================================================
- * Copyright (c) 2005 Vadim Druzhin (cdslow@mail.ru).
+ * Copyright (c) 2005,2006 Vadim Druzhin (cdslow@mail.ru).
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without

@@ -1,2 +1,2 @@
-cd openssl-0.9.7d
+cd %1
 ms\mingw32.bat

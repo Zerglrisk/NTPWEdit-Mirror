@@ -1,4 +1,5 @@
 #ifndef __NTPW_H__
+#define __NTPW_H__
 
 enum HIVE_ID {H_SAM=0, /*H_SYS, H_SEC, H_SOF,*/ H_COUNT};
 

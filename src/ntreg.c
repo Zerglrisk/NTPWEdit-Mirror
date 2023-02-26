@@ -1,6 +1,7 @@
 /*
  * ntreg.c - NT Registry Hive access library
  *
+ * 2007-apr: LGPL license.
  * 2004-aug: Deep indirect index support. NT351 support. Recursive delete.
  *           Debugged a lot in allocation routines. Still no expansion.
  * 2004-jan: Verbosity updates
@@ -11,25 +12,24 @@
  * 
  * NOTE: The API is not frozen. It can and will change every release.
  *
- * Copyright (c) 1997-2004 Petter Nordahl-Hagen.
- * Freely distributable in source or binary for noncommercial purposes,
- * but I allow some exceptions to this.
- * Please see the COPYING file for more details on
- * copyrights & credits.
- *  
- * THIS SOFTWARE IS PROVIDED BY PETTER NORDAHL-HAGEN `AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ *****
  *
+ * NTREG - Window registry file reader / writer library
+ * Copyright (c) 1997-2007 Petter Nordahl-Hagen.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation;
+ * version 2.1 of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ * See file LGPL.txt for the full license.
+ * 
  */ 
+
 /*
  * This version of file is modified by Vadim Druzhin.
  * Included defines for missing bzero() under MINGW32,
@@ -50,15 +50,15 @@
 #include <string.h>
 #include <unistd.h>
 
+#ifdef __MINGW32__
+#define bzero(a, b) memset((a), 0, (b))
+#endif /* __MINGW32__ */
+
 #include "log.h"
 #undef printf
 #undef putchar
 #define printf WriteLog
 #define putchar(x) WriteLog("%c", (x))
-
-#ifdef __MINGW32__
-#define bzero(a, b) memset((a), 0, (b))
-#endif /* __MINGW32__ */
 
 #include "ntreg.h"
 
@@ -66,7 +66,7 @@
 #define DOCORE 0
 
 
-const char ntreg_version[] = "ntreg lib routines, v0.92 040818, (c) Petter N Hagen, modified by Vadim Druzhin";
+const char ntreg_version[] = "ntreg lib routines, v0.94 070409, (c) Petter N Hagen, Vadim Druzhin";
 
 char *val_types[REG_MAX+1] = {
   "REG_NONE", "REG_SZ", "REG_EXPAND_SZ", "REG_BINARY", "REG_DWORD",       /* 0 - 4 */
@@ -397,24 +397,25 @@ void parse_nk(struct hive *hdesc, int vofs, int blen)
 
   printf("== nk at offset %0x\n",vofs);
 
-#define D_OFFS_NK(o) ( (char *)&(key->o)-(char *)hdesc->buffer-vofs )
+  /* #define D_OFFS2(o) ( (void *)&(key->o)-(void *)hdesc->buffer-vofs ) */
+#define D_OFFS(o) ( (char *)&(key->o)-(char *)hdesc->buffer-vofs )
 
   key = (struct nk_key *)(hdesc->buffer + vofs);
-  printf("%04x   type              = 0x%02x %s\n", D_OFFS_NK(type)  , key->type,
+  printf("%04x   type              = 0x%02x %s\n", D_OFFS(type)  , key->type,
 	                           (key->type == KEY_ROOT ? "ROOT_KEY" : "") );
-  printf("%04x   timestamp skipped\n", D_OFFS_NK(timestamp) );
-  printf("%04x   parent key offset = 0x%0lx\n", D_OFFS_NK(ofs_parent) ,key->ofs_parent);
-  printf("%04x   number of subkeys = %ld\n", D_OFFS_NK(no_subkeys),key->no_subkeys);
-  printf("%04x   lf-record offset  = 0x%0lx\n",D_OFFS_NK(ofs_lf),key->ofs_lf);
-  printf("%04x   number of values  = %ld\n", D_OFFS_NK(no_values),key->no_values);
-  printf("%04x   val-list offset   = 0x%0lx\n",D_OFFS_NK(ofs_vallist),key->ofs_vallist);
-  printf("%04x   sk-record offset  = 0x%0lx\n",D_OFFS_NK(ofs_sk),key->ofs_sk);
-  printf("%04x   classname offset  = 0x%0lx\n",D_OFFS_NK(ofs_classnam),key->ofs_classnam);
-  printf("%04x   *unused?*         = 0x%0lx\n",D_OFFS_NK(dummy4),key->dummy4);
-  printf("%04x   name length       = %d\n", D_OFFS_NK(len_name),key->len_name);
-  printf("%04x   classname length  = %d\n", D_OFFS_NK(len_classnam),key->len_classnam);
+  printf("%04x   timestamp skipped\n", D_OFFS(timestamp) );
+  printf("%04x   parent key offset = 0x%0lx\n", D_OFFS(ofs_parent) ,key->ofs_parent);
+  printf("%04x   number of subkeys = %ld\n", D_OFFS(no_subkeys),key->no_subkeys);
+  printf("%04x   lf-record offset  = 0x%0lx\n",D_OFFS(ofs_lf),key->ofs_lf);
+  printf("%04x   number of values  = %ld\n", D_OFFS(no_values),key->no_values);
+  printf("%04x   val-list offset   = 0x%0lx\n",D_OFFS(ofs_vallist),key->ofs_vallist);
+  printf("%04x   sk-record offset  = 0x%0lx\n",D_OFFS(ofs_sk),key->ofs_sk);
+  printf("%04x   classname offset  = 0x%0lx\n",D_OFFS(ofs_classnam),key->ofs_classnam);
+  printf("%04x   *unused?*         = 0x%0lx\n",D_OFFS(dummy4),key->dummy4);
+  printf("%04x   name length       = %d\n", D_OFFS(len_name),key->len_name);
+  printf("%04x   classname length  = %d\n", D_OFFS(len_classnam),key->len_classnam);
 
-  printf("%04x   Key name: <",D_OFFS_NK(keyname) );
+  printf("%04x   Key name: <",D_OFFS(keyname) );
   for(i = 0; i < key->len_name; i++) putchar(key->keyname[i]);
   printf(">\n== End of key info.\n");
 
@@ -430,21 +431,20 @@ void parse_vk(struct hive *hdesc, int vofs, int blen)
 
   printf("== vk at offset %0x\n",vofs);
 
-#define D_OFFS_VK(o) ( (char *)&(key->o)-(char *)hdesc->buffer-vofs )
 
   key = (struct vk_key *)(hdesc->buffer + vofs);
-  printf("%04x   name length       = %d (0x%0x)\n", D_OFFS_VK(len_name),
+  printf("%04x   name length       = %d (0x%0x)\n", D_OFFS(len_name),
 	                             key->len_name, key->len_name  );
-  printf("%04x   length of data    = %ld (0x%0lx)\n", D_OFFS_VK(len_data),
+  printf("%04x   length of data    = %ld (0x%0lx)\n", D_OFFS(len_data),
 	                             key->len_data, key->len_data  );
-  printf("%04x   data offset       = 0x%0lx\n",D_OFFS_VK(ofs_data),key->ofs_data);
-  printf("%04x   value type        = 0x%0lx  %s\n", D_OFFS_VK(val_type), key->val_type,
+  printf("%04x   data offset       = 0x%0lx\n",D_OFFS(ofs_data),key->ofs_data);
+  printf("%04x   value type        = 0x%0lx  %s\n", D_OFFS(val_type), key->val_type,
                  (key->val_type <= REG_MAX ? val_types[key->val_type] : "(unknown)") ) ;
 
-  printf("%04x   flag              = 0x%0x\n",D_OFFS_VK(flag),key->flag);
-  printf("%04x   *unused?*         = 0x%0x\n",D_OFFS_VK(dummy1),key->dummy1);
+  printf("%04x   flag              = 0x%0x\n",D_OFFS(flag),key->flag);
+  printf("%04x   *unused?*         = 0x%0x\n",D_OFFS(dummy1),key->dummy1);
 
-  printf("%04x   Key name: <",D_OFFS_VK(keyname) );
+  printf("%04x   Key name: <",D_OFFS(keyname) );
   for(i = 0; i < key->len_name; i++) putchar(key->keyname[i]);
   printf(">\n== End of key info.\n");
 
@@ -461,15 +461,13 @@ void parse_sk(struct hive *hdesc, int vofs, int blen)
 
   printf("== sk at offset %0x\n",vofs);
 
-#define D_OFFS_SK(o) ( (char *)&(key->o)-(char *)hdesc->buffer-vofs )
-
   key = (struct sk_key *)(hdesc->buffer + vofs);
-  printf("%04x   *unused?*         = %d\n"   , D_OFFS_SK(dummy1),     key->dummy1    );
-  printf("%04x   Offset to prev sk = 0x%0lx\n", D_OFFS_SK(ofs_prevsk), key->ofs_prevsk);
-  printf("%04x   Offset to next sk = 0x%0lx\n", D_OFFS_SK(ofs_nextsk), key->ofs_nextsk);
-  printf("%04x   Usage counter     = %ld (0x%0lx)\n", D_OFFS_SK(no_usage),
+  printf("%04x   *unused?*         = %d\n"   , D_OFFS(dummy1),     key->dummy1    );
+  printf("%04x   Offset to prev sk = 0x%0lx\n", D_OFFS(ofs_prevsk), key->ofs_prevsk);
+  printf("%04x   Offset to next sk = 0x%0lx\n", D_OFFS(ofs_nextsk), key->ofs_nextsk);
+  printf("%04x   Usage counter     = %ld (0x%0lx)\n", D_OFFS(no_usage),
 	                                            key->no_usage,key->no_usage);
-  printf("%04x   Security data len = %ld (0x%0lx)\n", D_OFFS_SK(len_sk),
+  printf("%04x   Security data len = %ld (0x%0lx)\n", D_OFFS(len_sk),
 	                                            key->len_sk,key->len_sk);
 
   printf("== End of key info.\n");
@@ -487,14 +485,12 @@ void parse_lf(struct hive *hdesc, int vofs, int blen)
 
   printf("== lf at offset %0x\n",vofs);
 
-#define D_OFFS_LF(o) ( (char *)&(key->o)-(char *)hdesc->buffer-vofs )
-
   key = (struct lf_key *)(hdesc->buffer + vofs);
-  printf("%04x   number of keys    = %d\n", D_OFFS_LF(no_keys), key->no_keys  );
+  printf("%04x   number of keys    = %d\n", D_OFFS(no_keys), key->no_keys  );
 
   for(i = 0; i < key->no_keys; i++) {
     printf("%04x      %3d   Offset: 0x%0lx  - <%c%c%c%c>\n", 
-	   D_OFFS_LF(u.hash[i].ofs_nk), i,
+	   D_OFFS(u.hash[i].ofs_nk), i,
 	   key->u.hash[i].ofs_nk,
            key->u.hash[i].name[0],
            key->u.hash[i].name[1],
@@ -517,14 +513,12 @@ void parse_lh(struct hive *hdesc, int vofs, int blen)
 
   printf("== lh at offset %0x\n",vofs);
 
-#define D_OFFS_LH(o) ( (char *)&(key->o)-(char *)hdesc->buffer-vofs )
-
   key = (struct lf_key *)(hdesc->buffer + vofs);
-  printf("%04x   number of keys    = %d\n", D_OFFS_LH(no_keys), key->no_keys  );
+  printf("%04x   number of keys    = %d\n", D_OFFS(no_keys), key->no_keys  );
 
   for(i = 0; i < key->no_keys; i++) {
     printf("%04x      %3d   Offset: 0x%0lx  - <hash: %08lx>\n", 
-	   D_OFFS_LH(u.lh_hash[i].ofs_nk), i,
+	   D_OFFS(u.lh_hash[i].ofs_nk), i,
 	   key->u.lh_hash[i].ofs_nk,
            key->u.lh_hash[i].hash );
   }
@@ -544,14 +538,14 @@ void parse_li(struct hive *hdesc, int vofs, int blen)
 
   printf("== li at offset %0x\n",vofs);
 
-#define D_OFFS_LI(o) ( (char *)&(key->o)-(char *)hdesc->buffer-vofs )
+  /* #define D_OFFS(o) ( (void *)&(key->o)-(void *)hdesc->buffer-vofs ) */
 
   key = (struct li_key *)(hdesc->buffer + vofs);
-  printf("%04x   number of keys    = %d\n", D_OFFS_LI(no_keys), key->no_keys  );
+  printf("%04x   number of keys    = %d\n", D_OFFS(no_keys), key->no_keys  );
 
   for(i = 0; i < key->no_keys; i++) {
     printf("%04x      %3d   Offset: 0x%0lx\n", 
-	   D_OFFS_LI(hash[i].ofs_nk), i,
+	   D_OFFS(hash[i].ofs_nk), i,
 	   key->hash[i].ofs_nk);
   }
   printf("== End of key info.\n");
@@ -569,14 +563,14 @@ void parse_ri(struct hive *hdesc, int vofs, int blen)
 
   printf("== ri at offset %0x\n",vofs);
 
-#define D_OFFS_RI(o) ( (char *)&(key->o)-(char *)hdesc->buffer-vofs )
+  /* #define D_OFFS(o) ( (void *)&(key->o)-(void *)hdesc->buffer-vofs ) */
 
   key = (struct ri_key *)(hdesc->buffer + vofs);
-  printf("%04x   number of subindices = %d\n", D_OFFS_RI(no_lis), key->no_lis  );
+  printf("%04x   number of subindices = %d\n", D_OFFS(no_lis), key->no_lis  );
 
   for(i = 0; i < key->no_lis; i++) {
     printf("%04x      %3d   Offset: 0x%0lx\n", 
-	   D_OFFS_RI(hash[i].ofs_li), i,
+	   D_OFFS(hash[i].ofs_li), i,
 	   key->hash[i].ofs_li);
   }
   printf("== End of key info.\n");
@@ -893,7 +887,7 @@ int alloc_block(struct hive *hdesc, int ofs, int size)
  * Will CHANGE HIVE IF SUCCESSFUL (changes linkage)
  */
 
-#define FB_DEBUG 1
+#define FB_DEBUG 0
 
 int free_block(struct hive *hdesc, int blk)
 {
@@ -1433,7 +1427,7 @@ void nk_ls(struct hive *hdesc, char *path, int vofs, int type)
     while ((ex_next_v(hdesc, nkofs, &count, &vex) > 0)) {
       printf("[%6x] %6d  %-16s  <%s>", vex.vkoffs, vex.size,
 	     (vex.type < REG_MAX ? val_types[vex.type] : "(unknown)"), vex.name);
-      if (vex.type == REG_DWORD) printf(" %*d [0x%x]",25-strlen(vex.name),vex.val , vex.val);
+      if (vex.type == REG_DWORD) printf(" %*d [0x%x]",25-(int)strlen(vex.name),vex.val , vex.val);
       printf("\n");
       FREE(vex.name);
     }
@@ -1890,7 +1884,7 @@ int del_value(struct hive *hdesc, int nkofs, char *name)
  * return: ptr to new keystruct, or NULL
  */
 
-#undef AKDEBUG
+#define AKDEBUG 1
 struct nk_key *add_key(struct hive *hdesc, int nkofs, char *name)
 {
 
@@ -1954,7 +1948,7 @@ struct nk_key *add_key(struct hive *hdesc, int nkofs, char *name)
       oldlf = (struct lf_key *)(hdesc->buffer + oldlfofs + 0x1004);
 
 #ifdef AKDEBUG
-      printf("add_key: top of ri-loop: rislot = %d\n",rislot);
+      printf("add_key: top of ri-loop: rislot = %d, rimax = %d\n",rislot,rimax);
 #endif
       slot = -1;
 
@@ -1974,7 +1968,7 @@ struct nk_key *add_key(struct hive *hdesc, int nkofs, char *name)
 	  onkofs = oldli->hash[o].ofs_nk;
 	  onk = (struct nk_key *)(onkofs + hdesc->buffer + 0x1004);
 	  if (slot == -1) {
-#if 0
+#if 1
 	    printf("add_key: cmp <%s> with <%s>\n",name,onk->keyname);
 #endif
 
@@ -2024,7 +2018,7 @@ struct nk_key *add_key(struct hive *hdesc, int nkofs, char *name)
 	      FREE(newlf);
 	      return(NULL);
 	    }
-	    if ( cmp < 0) {
+	    if ( cmp < 0 ) {
 	      slot = o;
 	      rimax = rislot;  /* Cause end of 'ri' search, too */
 	      n++;
@@ -2043,8 +2037,7 @@ struct nk_key *add_key(struct hive *hdesc, int nkofs, char *name)
       } /* li else check */
 
 
-
-    } while ( (rislot < rimax) );  /* 'ri' wrapper loop */
+    } while ( (rislot < rimax) && (rimax > 0));  /* 'ri' wrapper loop */
 
   } else { /* Parent was empty, make new index block */
 #ifdef AKDEBUG
@@ -2540,7 +2533,7 @@ int put_dword(struct hive *hdesc, int vofs, char *path, int dword)
   ALLOC(kr,1,sizeof(int)+sizeof(int));
   
   kr->len = sizeof(int);
-  /*(int)*/kr->data = dword;
+  kr->data = dword;
 
   r = put_buf2val(hdesc, kr, vofs, path, REG_DWORD);
 
@@ -2667,7 +2660,7 @@ struct hive *openHive(char *filename, int mode)
      printf("openHive(%s): File does not seem to be a registry hive!\n",filename);
      return(hdesc);
    }
-   printf("Hive's name (from header): <");
+   printf("Hive <%s> name (from header): <",filename);
    for (c = hdr->name; *c && (c < hdr->name + 64); c += 2) putchar(*c);
 
    hdesc->rootofs = hdr->ofs_rootkey + 0x1000;
@@ -2707,7 +2700,7 @@ struct hive *openHive(char *filename, int mode)
 #endif
      p = (struct hbin_page *)(hdesc->buffer + pofs);
      if (p->id != 0x6E696268) {
-       printf("Page at 0x%lx is not 'hbin', assuming file contains garbage at end",pofs);
+       printf("Page at 0x%lx is not 'hbin', assuming file contains garbage at end\n",pofs);
        break;
      }
      hdesc->pages++;
@@ -2732,15 +2725,15 @@ struct hive *openHive(char *filename, int mode)
 
      vofs = pofs + 0x20; /* Skip page header */
 #if 1
-     while (vofs-pofs < p->ofs_next) {
+     while (vofs-pofs < p->ofs_next && vofs < hdesc->size) {
        vofs += parse_block(hdesc,vofs,verbose);
 
      }
 #endif
      pofs += p->ofs_next;
    }
-   printf("\nFile size %d [%x] bytes, containing %d pages (+ 1 headerpage)\n",hdesc->size,hdesc->size, hdesc->pages);
-   printf("Used for data: %d/%d blocks/bytes, unused: %d/%d blocks/bytes.\n",
+   printf("File size %d [%x] bytes, containing %d pages (+ 1 headerpage)\n",hdesc->size,hdesc->size, hdesc->pages);
+   printf("Used for data: %d/%d blocks/bytes, unused: %d/%d blocks/bytes.\n\n",
 	  hdesc->useblk,hdesc->usetot,hdesc->unuseblk,hdesc->unusetot);
   
 

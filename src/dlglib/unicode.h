@@ -24,5 +24,6 @@ WCHAR *Num(WCHAR *to, int n);
 WCHAR *Rcs(WCHAR *to, int id);
 WCHAR *Crlf(WCHAR *to);
 WCHAR *Stra(WCHAR *to, char *from);
+extern BOOL (*GetVolumeLabelU)(WCHAR *root, WCHAR *label, int size);
 
 #endif /* __UNICODE_H__ */

@@ -1,5 +1,5 @@
 /* ===================================================================
- * Copyright (c) 2005 Vadim Druzhin (cdslow@mail.ru).
+ * Copyright (c) 2005,2006 Vadim Druzhin (cdslow@mail.ru).
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -55,6 +55,8 @@ static UINT WINAPI GetDlgItemTextWtoA(
     WCHAR *textw, int max
     );
 static BOOL WINAPI Shell_NotifyIconWtoA(DWORD msg, NOTIFYICONDATAW *nidw);
+static BOOL GetVolumeLabelW(WCHAR *root, WCHAR *label, int size);
+static BOOL GetVolumeLabelA(WCHAR *root, WCHAR *label, int size);
 
 BOOL (*GetNonClientMetricsU)(NONCLIENTMETRICSW *ncmw)=GetNonClientMetricsA;
 int WINAPI (*DialogBoxIndirectParamU)
@@ -69,6 +71,7 @@ BOOL WINAPI (*SetDlgItemTextU)(HWND,int,LPCWSTR)=SetDlgItemTextWtoA;
 UINT WINAPI (*GetDlgItemTextU)(HWND,int,LPWSTR,int)=GetDlgItemTextWtoA;
 int WINAPI (*GetWindowTextLengthU)(HWND)=GetWindowTextLengthA;
 BOOL WINAPI (*Shell_NotifyIconU)(DWORD,PNOTIFYICONDATAW)=Shell_NotifyIconWtoA;
+BOOL (*GetVolumeLabelU)(WCHAR *root, WCHAR *label, int size)=GetVolumeLabelA;
 
 static BOOL OSRealUnicode=FALSE;
 
@@ -96,6 +99,7 @@ void UnicodeInit(void)
         SetDlgItemTextU=SetDlgItemTextW;
         GetDlgItemTextU=GetDlgItemTextW;
         GetWindowTextLengthU=GetWindowTextLengthW;
+        GetVolumeLabelU=GetVolumeLabelW;
         if(NULL==shell32)
             shell32=LoadLibrary("shell32.dll");
         if(NULL!=shell32)
@@ -114,6 +118,7 @@ void UnicodeInit(void)
         GetDlgItemTextU=GetDlgItemTextWtoA;
         GetWindowTextLengthU=GetWindowTextLengthA;
         Shell_NotifyIconU=Shell_NotifyIconWtoA;
+        GetVolumeLabelU=GetVolumeLabelA;
         }
     }
 
@@ -456,3 +461,34 @@ WCHAR *Stra(WCHAR *to, char *from)
     return to;
     }
 
+static BOOL GetVolumeLabelW(WCHAR *root, WCHAR *label, int size)
+    {
+    return GetVolumeInformationW(root, label, size, NULL, NULL, NULL, NULL, 0);
+    }
+
+static BOOL GetVolumeLabelA(WCHAR *root, WCHAR *label, int size)
+    {
+    char *rootA;
+    char *labelA;
+    BOOL res;
+
+    rootA=TextBufWtoA(root);
+    if(NULL==rootA)
+        return FALSE;
+
+    labelA=malloc(size);
+    if(NULL==labelA)
+        {
+        free(rootA);
+        return FALSE;
+        }
+
+    res=GetVolumeInformationA(rootA, labelA, size, NULL, NULL, NULL, NULL, 0);
+    if(res)
+        MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, labelA, -1, label, size);
+
+    free(labelA);
+    free(rootA);
+
+    return res;
+    }

@@ -1,5 +1,5 @@
 /* ===================================================================
- * Copyright (c) 2005 Vadim Druzhin (cdslow@mail.ru).
+ * Copyright (c) 2005,2006 Vadim Druzhin (cdslow@mail.ru).
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -40,7 +40,7 @@
 #include "dialogs.h"
 #include "ctl_richview.h"
 
-#define EXTRA_W 32
+#define EXTRA_W 34
 #define EXTRA_H 22
 #define LIMIT_W 512
 #define LIMIT_H (LIMIT_W/4*3)
@@ -75,6 +75,27 @@ static void PreInit(void)
         dll=LoadLibrary("RICHED32.DLL");
     }
 
+static void Init(HWND window, int id)
+    {
+    HWND item;
+    HFONT font;
+    HDC dc;
+    TEXTMETRIC tm;
+    CHARFORMAT fmt;
+
+    item=GetDlgItem(window, id);
+    font=(HFONT)SendMessage(window, WM_GETFONT, 0, 0);
+    dc=GetDC(item);
+    SelectObject(dc, font);
+    GetTextMetrics(dc, &tm);
+    ReleaseDC(item, dc);
+
+    fmt.cbSize=sizeof(fmt);
+    SendMessage(item, EM_GETCHARFORMAT, 0, (LPARAM)&fmt);
+    fmt.bCharSet=tm.tmCharSet;
+    SendMessage(item, EM_SETCHARFORMAT, 0, (LPARAM)&fmt);
+    }
+
 struct DLG_Control CtlRichView=
     {
     L"RichEdit",
@@ -83,7 +104,7 @@ struct DLG_Control CtlRichView=
         WS_BORDER,
     0,
     TRUE,
-    NULL,
+    Init,
     Estimate,
     DlgMoveItem,
     PreInit

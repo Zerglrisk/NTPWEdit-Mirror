@@ -1,23 +1,6 @@
 /* ===================================================================
- * Copyright (c) 2005,2006 Vadim Druzhin (cdslow@mail.ru).
+ * Copyright (c) 2005-2007 Vadim Druzhin (cdslow@mail.ru).
  * All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 
- *    1. Redistributions of source code must retain the above
- * copyright notice, this list of conditions and the following
- * disclaimer.
- * 
- *    2. Redistributions in binary form must reproduce the above
- * copyright notice, this list of conditions and the following
- * disclaimer in the documentation and/or other materials provided
- * with the distribution.
- * 
- *    3. The name of the author may not be used to endorse or promote
- * products derived from this software without specific prior written
- * permission.
  * 
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -30,6 +13,10 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; version 2 of the License.
  * ===================================================================
  */
 
@@ -89,6 +76,7 @@ enum
     ID_GRP_LABEL,
     ID_LABEL_ABOUT,
     ID_SPACER_ABOUT2,
+    ID_GRP_ABOUT_BUTTON,
     ID_BUTTON_ABOUT,
     ID_GRP_PATH,
     ID_EDIT_PATH,
@@ -113,10 +101,11 @@ static struct DLG_Item Items[]=
     {&CtlGroupBoxH, ID_GRP_ABOUT, NULL, 0, 0, NULL},
     {&CtlIcon, ID_ICON_ABOUT, L"IconApp", 0, ID_GRP_ABOUT, NULL},
     {&CtlGroupBoxSpacer, ID_SPACER_ABOUT1, NULL, 0, ID_GRP_ABOUT, NULL},
-    {&CtlGroupH, ID_GRP_LABEL, GRP_TITLE_FILL_CX, 0, ID_GRP_ABOUT, NULL},
-    {&CtlLabel, ID_LABEL_ABOUT, L"NTPWEdit \xA9 2005,2006 Vadim Druzhin", 0, ID_GRP_LABEL, NULL},
+    {&CtlGroupH, ID_GRP_LABEL, GRP_TITLE_FILL, 0, ID_GRP_ABOUT, NULL},
+    {&CtlLabel, ID_LABEL_ABOUT, L"NTPWEdit \xA9 2005-2007 Vadim Druzhin", 0, ID_GRP_LABEL, NULL},
     {&CtlGroupBoxSpacer, ID_SPACER_ABOUT2, NULL, 0, ID_GRP_ABOUT, NULL},
-    {&CtlButton, ID_BUTTON_ABOUT, L"About", 0, ID_GRP_ABOUT, Button_ABOUT},
+    {&CtlGroupH, ID_GRP_ABOUT_BUTTON, GRP_TITLE_FILL_CY, 0, ID_GRP_ABOUT, NULL},
+    {&CtlButton, ID_BUTTON_ABOUT, L"About", 0, ID_GRP_ABOUT_BUTTON, Button_ABOUT},
     {&CtlGroupBoxH, ID_GRP_PATH, L"Path to SAM file", 0, 0, NULL},
     {&CtlEdit, ID_EDIT_PATH, L"C:\\WINDOWS\\SYSTEM32\\CONFIG\\SAM", 0, ID_GRP_PATH, Edit_PATH},
     {&CtlGroupBoxSpacer, ID_SPACER_PATH, NULL, 0, ID_GRP_PATH, NULL},
@@ -148,8 +137,8 @@ static BOOL Button_CANCEL(
         {
         if(IsWindowEnabled(GetDlgItem(window, ID_BUTTON_SAVE)))
             {
-            if(IDOK==AppMessageBox(window,
-                    L"Changes not saved.\n\nSave before exit?", MB_OKCANCEL)
+            if(IDYES==AppMessageBox(window,
+                    L"Changes not saved.\n\nSave before exit?", MB_YESNO)
                 )
                 Button_SAVE(window, ID_BUTTON_SAVE, msg, wParam, lParam);
             }
